@@ -3,10 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"codevald.com/utilities"
 )
@@ -21,10 +21,6 @@ func main() {
 	}
 }
 
-type UserData struct {
-	Images []string
-}
-
 func check(e error) {
 	if e != nil {
 		panic(e)
@@ -32,30 +28,22 @@ func check(e error) {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Asset not found\n"))
+	if r.URL.Path != "/images/" {
+		fetchImagesHandler(w, r)
 		return
 	}
+
+	// if r.URL.Path != "/" {
+	// 	w.WriteHeader(http.StatusNotFound)
+	// 	w.Write([]byte("Asset not found\n"))
+	// 	return
+	// }
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Running AP v1\n"))
 }
 
 func userFilesPath(userId string) string {
-	return "userfiles/" + userId
-}
-
-func userFilesMeta(userId string) string {
-	return "userfiles/" + userId + "/userdata.json"
-}
-
-func saveFileData(userId string, fileName string) {
-	data := UserData{
-		Images: []string{fileName},
-	}
-
-	file, _ := json.MarshalIndent(data, "", " ")
-	_ = ioutil.WriteFile(userFilesMeta(userId), file, 0644)
+	return "../userfiles/" + userId
 }
 
 func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
@@ -78,17 +66,27 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
-	fmt.Printf("File Size: %+v\n", handler.Size)
-	fmt.Printf("MIME Header: %+v\n", handler.Header)
 	extension := filepath.Ext(handler.Filename)
 
 	savedFile := utilities.UploadFile(userFilesPath(userId), file, extension)
-	saveFileData(userId, savedFile)
-	fmt.Fprintf(w, "Successfully Uploaded File\n")
+	utilities.SaveUserData(userId, savedFile)
+}
+
+func fetchImagesHandler(w http.ResponseWriter, r *http.Request) {
+	urlComponents := strings.Split(r.URL.Path, "/")
+	response, err := getJsonResponse(urlComponents[2])
+	check(err)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
+}
+
+func getJsonResponse(userId string) ([]byte, error) {
+	data := utilities.GetUserData(userId)
+	return json.MarshalIndent(data, "", "  ")
 }
 
 func setupRoutes() {
+	http.HandleFunc("/images/{userId}", fetchImagesHandler)
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/upload", uploadFileHandler)
 }

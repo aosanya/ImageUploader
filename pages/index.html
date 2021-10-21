@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" href="styles.css">
+    <title>Upload Documnet</title>
+  </head>
+  <body>
+    <form
+      enctype="multipart/form-data"
+      action="http://localhost:11111/upload"
+      method="post"
+    >
+    <ul class="form-style">
+      <li><label>User Id <span class="required">*</span></label><input type="text" name="userId" class="field-divided" placeholder="User Id" value="Sample Id 1" /></li>
+      <li><label>File To Upload <span class="required">*</span></label><input type="file" name="uploadFile" accept="image/png, image/gif, image/jpeg"/></li>
+      <li> <input type="submit" value="upload" /></li>
+      
+      <li>
+        <div id='div_images'></div>
+      </li>
+    </ul>
+    </form>
+  </body>
+</html>
