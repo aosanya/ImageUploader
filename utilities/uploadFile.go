@@ -6,15 +6,9 @@ import (
 	"mime/multipart"
 )
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 func UploadFile(path string, file multipart.File, extension string) string {
-	tempFile, err := ioutil.TempFile(path, "upload-*."+extension)
-	check(err)
+	tempFile, err := ioutil.TempFile(path, "upload-*"+extension)
+	Check(err)
 	defer tempFile.Close()
 	// read all of the contents of our uploaded file into a
 	// byte array
