@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,31 +14,19 @@ import (
 
 func main() {
 	setupRoutes()
-	fmt.Println("Starting server on 11111")
-	err := http.ListenAndServe("localhost:11111", nil)
+	fmt.Println("Starting server")
+	err := http.ListenAndServe("0.0.0.0:3000", nil)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/images/" {
+	if strings.HasPrefix(r.URL.Path, "/images/") {
 		fetchImagesHandler(w, r)
 		return
 	}
-
-	// if r.URL.Path != "/" {
-	// 	w.WriteHeader(http.StatusNotFound)
-	// 	w.Write([]byte("Asset not found\n"))
-	// 	return
-	// }
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Running AP v1\n"))
 }
@@ -50,7 +39,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	userId := r.FormValue("userId")
 	err := os.MkdirAll(userFilesPath(userId), 0755)
-	check(err)
+	utilities.Check(err)
 
 	fmt.Println(userId)
 	// Parse our multipart form, 10 << 20 specifies a maximum
@@ -70,12 +59,30 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	savedFile := utilities.UploadFile(userFilesPath(userId), file, extension)
 	utilities.SaveUserData(userId, savedFile)
+	returnSuccess(w, r, "Visit '/images/"+userId+"' to view your uploaded images")
+}
+
+func returnSuccess(w http.ResponseWriter, r *http.Request, message string) {
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	resp := make(map[string]string)
+	resp["message"] = "Success"
+	resp["info"] = message
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+	}
+	w.Write(jsonResp)
 }
 
 func fetchImagesHandler(w http.ResponseWriter, r *http.Request) {
 	urlComponents := strings.Split(r.URL.Path, "/")
-	response, err := getJsonResponse(urlComponents[2])
-	check(err)
+	fetchImagesWriter(w, urlComponents[2])
+}
+
+func fetchImagesWriter(w http.ResponseWriter, userId string) {
+	response, err := getJsonResponse(userId)
+	utilities.Check(err)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
 }
