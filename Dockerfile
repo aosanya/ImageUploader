@@ -2,18 +2,16 @@
 
 FROM golang:1.16-alpine
 
-WORKDIR
-Learn more about the "WORKDIR" Dockerfile command.
- /app
+WORKDIR /build
 
-COPY go.mod ./
-COPY go.sum ./
-RUN go mod download
+COPY . ./
 
-COPY *.go ./
+RUN go build .
 
-RUN go build -o /docker-gs-ping
+WORKDIR /dist
 
-EXPOSE 11111
+RUN cp /build/main .
 
-CMD [ "/docker-gs-ping" ]
+EXPOSE 3000
+
+CMD [ "/dist/main" ]
