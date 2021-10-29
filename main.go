@@ -28,7 +28,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Running AP v1.1\n"))
+	w.Write([]byte("Running AP v1.2\n"))
 }
 
 func userFilesPath(userId string) string {
